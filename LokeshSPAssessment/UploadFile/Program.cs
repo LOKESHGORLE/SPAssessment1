@@ -7,9 +7,9 @@ using Microsoft.SharePoint.Client;
 using System.Data;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Packaging;
-using System.Text;
 using Microsoft.SharePoint.Client.Utilities;
-//using System.Web.UI.WebControls.FileUpload;
+using Excel = Microsoft.Office.Interop.Excel;
+
 
 namespace UploadFile
 {
@@ -25,10 +25,10 @@ namespace UploadFile
                 clientContext.Credentials = new SharePointOnlineCredentials(crd.userName, crd.password);
 
 
-                // GetFile(clientContext);
+                //GetFile(clientContext);
                 //AddFiles(clientContext);
-                ReadExcelData(clientContext, "SharePointUploadList.xlsx");
-
+                //ReadExcelData(clientContext, "SharePointUploadList.xlsx");
+                GetExcelFile(clientContext);
                 Console.Read();
             }
         }
@@ -63,7 +63,7 @@ namespace UploadFile
 
         private static void ReadExcelData(ClientContext clientContext, string fileName)
         {
-            
+
             string strErrorMsg = string.Empty;
             const string lstDocName = "LokeshPractice";
             try
@@ -85,12 +85,12 @@ namespace UploadFile
                         data.Value.CopyTo(mStream);
                         using (SpreadsheetDocument document = SpreadsheetDocument.Open(mStream, false))
                         {
-                            WorkbookPart workbookPart = document.WorkbookPart;
+                            //WorkbookPart workbookPart = document.WorkbookPart;
                             IEnumerable<Sheet> sheets = document.WorkbookPart.Workbook.GetFirstChild<Sheets>().Elements<Sheet>();
                             string relationshipId = sheets.First().Id.Value;
                             WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart.GetPartById(relationshipId);
-                            Worksheet workSheet = worksheetPart.Worksheet;
-                            SheetData sheetData = workSheet.GetFirstChild<SheetData>();
+                            //Worksheet workSheet = worksheetPart.Worksheet;
+                            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
                             IEnumerable<Row> rows = sheetData.Descendants<Row>();
                             foreach (Cell cell in rows.ElementAt(0))
                             {
@@ -111,17 +111,12 @@ namespace UploadFile
                             }
                             dataTable.Rows.RemoveAt(0);
                         }
-                        
-                        for(int datarow=0; datarow < 3; datarow++)
+
+                        for (int datarow = 0; datarow < 3; datarow++)
                         {
                             DataRow r = dataTable.Rows[datarow];
-                            for(int datacolumn = 0; datacolumn < 1; datacolumn++)
-                            {
-                                string[] farr= r[datacolumn].ToString().Split('/');
-                                string FilePath= r[datacolumn].ToString();
-                                string FileName=  farr[farr.Length - 1];
-                                AddFiles(clientContext, FilePath, FileName);
-                            }
+                            AddFiles(clientContext, r);
+
                         }
 
                     }
@@ -130,7 +125,7 @@ namespace UploadFile
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message+"0000");
+                Console.WriteLine(e.Message + "0000");
             }
         }
 
@@ -138,34 +133,63 @@ namespace UploadFile
 
 
 
-        public static void AddFiles(ClientContext cxt,string FilepathString,string FileNameForURL)
+        public static void AddFiles(ClientContext cxt, DataRow row)
         {
 
-            
-            var pathstring =  FilepathString;
+            int datacolumn = 0;
+
+            string[] farr = row[datacolumn].ToString().Split('/');
+            string FilepathString = row[datacolumn].ToString();
+            string FileNameForURL = farr[farr.Length - 1];
+
+
+
+            System.IO.FileInfo fileInfo = new System.IO.FileInfo(FilepathString);
+
+            long filesize = fileInfo.Length;
             //var pathstring = @"D:/SPAssessment/FilesToUpload/SharePointUploadList.xlsx";
-            List l = cxt.Web.Lists.GetByTitle("LokeshPractice");
+            if (filesize < 15000)
+            {
 
-            FileCreationInformation fileToUpload = new FileCreationInformation();
-            fileToUpload.Content = System.IO.File.ReadAllBytes(pathstring);
-            fileToUpload.Overwrite = true;
-            fileToUpload.Url = "LokeshPractice/"+ FileNameForURL;
-            int filesize = 0;
-            fileToUpload.Content.GetLength(filesize);
-            // fileToUpload.Url = "LokeshPractice/SharePointUploadList.xlsx";
-
-            //folder.Folders.GetByUrl("LokeshPractice").Folders.GetByUrl("created Folder");
-
-            //  var list = cxt.Web.Lists.GetByTitle("LokeshPractice");
-            File uploadfile = l.RootFolder.Files.Add(fileToUpload);
-
-            //File fil = folder.Files.Add(fileToUpload);
+                List l = cxt.Web.Lists.GetByTitle("LokeshPractice");
 
 
-            uploadfile.Update();
-            cxt.ExecuteQuery();
-            //Console.ReadLine();
 
+                FileCreationInformation fileToUpload = new FileCreationInformation();
+                fileToUpload.Content = System.IO.File.ReadAllBytes(FilepathString);
+                fileToUpload.Overwrite = true;
+                fileToUpload.Url = "LokeshPractice/" + FileNameForURL;
+
+
+                //fileToUpload.Content.GetLength(filesize);
+
+
+                // fileToUpload.Url = "LokeshPractice/SharePointUploadList.xlsx";
+
+                //folder.Folders.GetByUrl("LokeshPractice").Folders.GetByUrl("created Folder");
+
+                //  var list = cxt.Web.Lists.GetByTitle("LokeshPractice");
+                File uploadfile = l.RootFolder.Files.Add(fileToUpload);
+
+                //File fil = folder.Files.Add(fileToUpload);
+
+                farr = row["Status"].ToString().Split(',');
+                ListItem fileitem = uploadfile.ListItemAllFields;
+                fileitem["Title"] = "File generated using Code";
+                fileitem["Multiselectcheck"] = farr;
+                fileitem["File_x0020_Type"] = fileInfo.Extension;
+                fileitem["CreatedBy"] = row["CreatedBy"];
+                fileitem.Update();
+                // cxt.Load(item);
+
+                //uploadfile.Update();
+                cxt.ExecuteQuery();
+                //Console.ReadLine();
+            }
+            else
+            {
+                Console.WriteLine(FileNameForURL + " file size exceed");
+            }
 
         }
 
@@ -215,6 +239,63 @@ namespace UploadFile
                 }
             }
             return value;
+        }
+
+
+
+        public static void GetExcelFile(ClientContext cxt)
+        {
+
+
+            var list = cxt.Web.Lists.GetByTitle("LokeshPractice");
+            var listItem = list.GetItemById(14);
+            cxt.Load(list);
+            cxt.Load(listItem, i => i.File);
+            cxt.ExecuteQuery();
+
+            var fileRef = listItem.File.ServerRelativeUrl;
+            var fileInfo = Microsoft.SharePoint.Client.File.OpenBinaryDirect(cxt, fileRef);
+            var fileName = System.IO.Path.Combine(@"D:\SPAssessment", (string)listItem.File.Name);
+            using (var fileStream = System.IO.File.Create(fileName))
+            {
+                fileInfo.Stream.CopyTo(fileStream);
+            }
+
+        }
+
+        public static void ReadData()
+        {           
+
+            //Read the excel document using Microsoft Office package
+            Excel.Application xlApp;
+            Excel.Workbook xlWorkBook;
+            Excel.Worksheet xlWorkSheet;
+            Excel.Range range;
+            int sprowCnt = 0; // row count
+            int spcolumnCnt = 0; // column count
+
+            xlApp = new Excel.ApplicationClass();
+            xlWorkBook = xlApp.Workbooks.Open(@"<strong>C:\splessons.xlsx</strong>", 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+
+            range = xlWorkSheet.UsedRange;
+
+            for (sprowCnt = 1; sprowCnt <= range.Rows.Count; sprowCnt++)
+            {
+                for (spcolumnCnt = 1; spcolumnCnt <= range.Columns.Count; spcolumnCnt++)
+                {
+                    Console.WriteLine(" Coulmn Number: " + spcolumnCnt + "--> " + (range.Cells[sprowCnt, spcolumnCnt] as Excel.Range).Value2);
+                }
+            }
+
+            xlWorkBook.Close(true, null, null);
+            xlApp.Quit();
+
+            Console.ReadKey();
+
+           
+
+
         }
     }
 }
