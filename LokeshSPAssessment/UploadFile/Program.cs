@@ -9,6 +9,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Packaging;
 using System.Text;
 using Microsoft.SharePoint.Client.Utilities;
+//using System.Web.UI.WebControls.FileUpload;
 
 namespace UploadFile
 {
@@ -139,14 +140,19 @@ namespace UploadFile
 
         public static void AddFiles(ClientContext cxt,string FilepathString,string FileNameForURL)
         {
+
+            
             var pathstring =  FilepathString;
             //var pathstring = @"D:/SPAssessment/FilesToUpload/SharePointUploadList.xlsx";
             List l = cxt.Web.Lists.GetByTitle("LokeshPractice");
 
             FileCreationInformation fileToUpload = new FileCreationInformation();
             fileToUpload.Content = System.IO.File.ReadAllBytes(pathstring);
+            fileToUpload.Overwrite = true;
             fileToUpload.Url = "LokeshPractice/"+ FileNameForURL;
-           // fileToUpload.Url = "LokeshPractice/SharePointUploadList.xlsx";
+            int filesize = 0;
+            fileToUpload.Content.GetLength(filesize);
+            // fileToUpload.Url = "LokeshPractice/SharePointUploadList.xlsx";
 
             //folder.Folders.GetByUrl("LokeshPractice").Folders.GetByUrl("created Folder");
 
