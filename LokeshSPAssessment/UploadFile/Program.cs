@@ -279,16 +279,17 @@ namespace UploadFile
             xlApp = new Excel.Application();
             xlWorkBook = xlApp.Workbooks.Open(@"D:\SPAssessment\SharePointUploadList.xlsx");
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
-           int lastrow = xlWorkSheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell).Row;
+            //int lastrow = xlWorkSheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell).Row;
             range = xlWorkSheet.UsedRange;
-            xlWorkSheet.Cells[12, 1] = "Inserted";
-            for (int row = 0; row < 3; row++)
-            {
-                for (int col = 1; col < 4; col++)
-                {
-                    Console.WriteLine(range.Cells[row, col].Value2);
-                }
-            }
+            //xlWorkSheet.Cells[1, 1] = "Inserted";
+            //Console.WriteLine(xlWorkSheet.Cells[1, 1]);
+            //for (int row = 0; row < 3; row++)
+            //{
+            //    for (int col = 1; col < 4; col++)
+            //    {
+            //        Console.WriteLine(xlWorkSheet.Cells[row, col]);
+            //    }
+            //}
             //for (sprowCnt = 2; sprowCnt <= range.Rows.Count; sprowCnt++)
             //{
             //    for (spcolumnCnt = 1; spcolumnCnt <= 2; spcolumnCnt++)
@@ -297,7 +298,7 @@ namespace UploadFile
             //    }
             //}
             //(range.Cells[12, 1] as Excel.Range).Value2 = "inserted";
-            //range.Cells[12, 1] = "Inserted";
+            range.Cells[13, 1] = "Inserted";
             xlWorkBook.Save();
             xlWorkBook.Close();
             xlApp.Quit();
