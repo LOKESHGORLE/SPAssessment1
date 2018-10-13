@@ -28,7 +28,9 @@ namespace UploadFile
                 //GetFile(clientContext);
                 //AddFiles(clientContext);
                 //ReadExcelData(clientContext, "SharePointUploadList.xlsx");
-                GetExcelFile(clientContext);
+                // GetExcelFile(clientContext);
+                ReadData();
+
                 Console.Read();
             }
         }
@@ -274,24 +276,33 @@ namespace UploadFile
             int sprowCnt = 0; // row count
             int spcolumnCnt = 0; // column count
 
-            xlApp = new Excel.ApplicationClass();
-            xlWorkBook = xlApp.Workbooks.Open(@"<strong>C:\splessons.xlsx</strong>", 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+            xlApp = new Excel.Application();
+            xlWorkBook = xlApp.Workbooks.Open(@"D:\SPAssessment\SharePointUploadList.xlsx");
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
-
+           int lastrow = xlWorkSheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell).Row;
             range = xlWorkSheet.UsedRange;
-
-            for (sprowCnt = 1; sprowCnt <= range.Rows.Count; sprowCnt++)
+            xlWorkSheet.Cells[12, 1] = "Inserted";
+            for (int row = 0; row < 3; row++)
             {
-                for (spcolumnCnt = 1; spcolumnCnt <= range.Columns.Count; spcolumnCnt++)
+                for (int col = 1; col < 4; col++)
                 {
-                    Console.WriteLine(" Coulmn Number: " + spcolumnCnt + "--> " + (range.Cells[sprowCnt, spcolumnCnt] as Excel.Range).Value2);
+                    Console.WriteLine(range.Cells[row, col].Value2);
                 }
             }
-
-            xlWorkBook.Close(true, null, null);
+            //for (sprowCnt = 2; sprowCnt <= range.Rows.Count; sprowCnt++)
+            //{
+            //    for (spcolumnCnt = 1; spcolumnCnt <= 2; spcolumnCnt++)
+            //    {
+            //        Console.WriteLine(" Coulmn Number: " + spcolumnCnt + "--> " + (range.Cells[sprowCnt, spcolumnCnt] as Excel.Range).Value2);
+            //    }
+            //}
+            //(range.Cells[12, 1] as Excel.Range).Value2 = "inserted";
+            //range.Cells[12, 1] = "Inserted";
+            xlWorkBook.Save();
+            xlWorkBook.Close();
             xlApp.Quit();
 
-            Console.ReadKey();
+            //Console.ReadKey();
 
            
 
